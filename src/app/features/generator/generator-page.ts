@@ -43,6 +43,24 @@ export class GeneratorPage {
     suggestionCount: this.fb.nonNullable.control(this.suggestionCounts[0]),
   });
 
+  constructor() {
+    const editRequest = (history.state as { editRequest?: GenerationRequest } | null)?.editRequest;
+    if (editRequest) {
+      const budgetIndex = this.budgetTiers.findIndex(
+        (tier) => tier.value === editRequest.maxAnnualBudget,
+      );
+      this.form.patchValue({
+        keywords: editRequest.keywords,
+        category: editRequest.category,
+        customCategory: editRequest.customCategory ?? '',
+        style: editRequest.style,
+        domainExtensions: editRequest.domainExtensions,
+        budgetIndex: budgetIndex >= 0 ? budgetIndex : this.budgetTiers.length - 1,
+        suggestionCount: editRequest.suggestionCount,
+      });
+    }
+  }
+
   protected readonly isCustomCategory = computed(
     () => this.form.controls.category.value === 'custom',
   );

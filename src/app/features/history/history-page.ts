@@ -22,6 +22,10 @@ export class HistoryPage {
     this.router.navigateByUrl('/results');
   }
 
+  protected editAndRerun(entry: RecentSearchEntry): void {
+    void this.router.navigate(['/generate'], { state: { editRequest: entry.request } });
+  }
+
   protected clear(): void {
     this.recentSearches.clear();
   }

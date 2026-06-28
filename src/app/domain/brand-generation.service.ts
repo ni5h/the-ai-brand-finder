@@ -24,6 +24,7 @@ export class BrandGenerationService {
         return forkJoin(candidateNames.map((name) => this.buildSuggestion(name, request))).pipe(
           map((suggestions) =>
             suggestions
+              .filter((suggestion) => this.hasAvailableDomain(suggestion))
               .sort((a, b) => b.score.overall - a.score.overall)
               .slice(0, request.suggestionCount),
           ),
@@ -59,6 +60,11 @@ export class BrandGenerationService {
     return domains.filter(
       (domain) => domain.status !== 'available' || (domain.price ?? Infinity) <= maxAnnualBudget,
     );
+  }
+
+  /** Only suggestions with at least one domain that's actually available (within the requested extensions and budget) are worth showing. */
+  private hasAvailableDomain(suggestion: BrandSuggestion): boolean {
+    return suggestion.domains.some((domain) => domain.status === 'available');
   }
 
   private makeId(): string {

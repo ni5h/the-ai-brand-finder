@@ -1,3 +1,6 @@
+import { Injectable } from '@angular/core';
+import type { Observable } from 'rxjs';
+import { of } from 'rxjs';
 import type { GenerationRequest } from '../../models';
 import {
   capitalize,
@@ -20,11 +23,12 @@ const MAX_REPEATED_CHAR_RUN = 2;
  * Future engines (e.g. LLM-backed) implement the same NameGenerator
  * interface and are swapped in via the NAME_GENERATOR injection token.
  */
+@Injectable({ providedIn: 'root' })
 export class RuleBasedNameGenerator implements NameGenerator {
-  generate(request: GenerationRequest, count: number): string[] {
+  generate(request: GenerationRequest, count: number): Observable<string[]> {
     const keywords = request.keywords.map(normalizeWord).filter((word) => word.length > 0);
     if (keywords.length === 0) {
-      return [];
+      return of([]);
     }
 
     const suffixPool = [...GENERIC_SUFFIXES, ...(STYLE_SUFFIXES[request.style] ?? [])];
@@ -39,7 +43,7 @@ export class RuleBasedNameGenerator implements NameGenerator {
       }
     }
 
-    return [...candidates].slice(0, count).map(capitalize);
+    return of([...candidates].slice(0, count).map(capitalize));
   }
 
   private *buildCandidates(
@@ -63,7 +67,10 @@ export class RuleBasedNameGenerator implements NameGenerator {
     yield* this.syllableRecombinationCandidates(keywords, suffixPool);
   }
 
-  private *keywordPlusSuffixCandidates(keywords: string[], suffixPool: string[]): Generator<string> {
+  private *keywordPlusSuffixCandidates(
+    keywords: string[],
+    suffixPool: string[],
+  ): Generator<string> {
     for (const keyword of keywords) {
       for (const suffix of suffixPool) {
         yield this.joinTrimmingOverlap(keyword, suffix);
@@ -97,7 +104,10 @@ export class RuleBasedNameGenerator implements NameGenerator {
     }
   }
 
-  private *syllableRecombinationCandidates(keywords: string[], suffixPool: string[]): Generator<string> {
+  private *syllableRecombinationCandidates(
+    keywords: string[],
+    suffixPool: string[],
+  ): Generator<string> {
     const allChunks = keywords.flatMap(splitIntoChunks).filter((chunk) => chunk.length >= 2);
     for (const chunk of allChunks) {
       for (const suffix of suffixPool) {

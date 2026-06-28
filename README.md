@@ -39,15 +39,27 @@ npm run build    # production build to dist/ai-brand-finder/browser
 Core capabilities are plugged in via Angular DI tokens, so the V1
 implementation of each can be swapped without touching callers:
 
-| Token             | Interface        | V1 implementation                                            |
-| ----------------- | ----------------- | -------------------------------------------------------------- |
-| `NAME_GENERATOR`  | `NameGenerator`   | `RuleBasedNameGenerator` — prefixes/suffixes/keyword blending  |
-| `BRAND_SCORER`    | `BrandScorer`     | `DefaultBrandScorer` — heuristic scoring across 6-7 criteria   |
-| `DOMAIN_PROVIDER` | `DomainProvider`  | `DohDomainProvider` — Cloudflare DNS-over-HTTPS NS lookups     |
+| Token             | Interface        | V1 implementation                                                       |
+| ----------------- | ----------------- | -------------------------------------------------------------------------- |
+| `NAME_GENERATOR`  | `NameGenerator`   | `CompositeNameGenerator` — AI when enabled, `RuleBasedNameGenerator` otherwise/as fallback |
+| `BRAND_SCORER`    | `BrandScorer`     | `DefaultBrandScorer` — heuristic scoring across 6-7 criteria               |
+| `DOMAIN_PROVIDER` | `DomainProvider`  | `DohDomainProvider` — Cloudflare DNS-over-HTTPS NS lookups                 |
 
-Bindings live in `src/app/app.config.ts`. A future LLM-backed generator or a
-registrar pricing API only needs to implement the relevant interface and be
-bound to its token — nothing in `features/` or `state/` needs to change.
+Bindings live in `src/app/app.config.ts`. A registrar pricing API only needs
+to implement the relevant interface and be bound to its token — nothing in
+`features/` or `state/` needs to change. `NameGenerator.generate()` returns
+an Observable so engines can call out (e.g. to an LLM) without changing the
+contract.
+
+### AI-powered generation (optional, bring your own key)
+
+The "AI-powered generation" toggle on the Generate page switches the name
+generator to call the Anthropic Messages API directly from the browser with
+a user-supplied API key (`LlmNameGenerator`). Since the app has no backend,
+the key is kept only in `localStorage` and sent straight to Anthropic over
+HTTPS. If the AI call fails for any reason (no/invalid key, network error,
+rate limit), `CompositeNameGenerator` transparently falls back to the
+rule-based engine, and the Results page shows which engine actually ran.
 
 ```
 src/app/
@@ -76,7 +88,7 @@ One-time setup after creating the GitHub repo: **Settings → Pages → Source
 
 ## Roadmap
 
-LLM-based generation, logo generation, social handle checks, trademark
-search, SEO analysis, AI brand advisor feedback, audience/personality
-analysis, multi-language support, domain watchlists, and a public REST API
-are intentionally out of scope for V1.
+Logo generation, social handle checks, trademark search, SEO analysis, AI
+brand advisor feedback, audience/personality analysis, multi-language
+support, domain watchlists, and a public REST API are intentionally out of
+scope for V1.

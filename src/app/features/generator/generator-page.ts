@@ -9,12 +9,13 @@ import {
   SUGGESTION_COUNTS,
 } from '../../core/config/app-options';
 import type { AnnualBudget, DomainExtension, GenerationRequest } from '../../domain/models';
+import { AiSettingsPanel } from '../../shared/ui/ai-settings-panel/ai-settings-panel';
 import { TagInput } from '../../shared/ui/tag-input/tag-input';
 import { GenerationStore } from '../../state/generation.store';
 
 @Component({
   selector: 'app-generator-page',
-  imports: [ReactiveFormsModule, TagInput],
+  imports: [ReactiveFormsModule, TagInput, AiSettingsPanel],
   templateUrl: './generator-page.html',
 })
 export class GeneratorPage {
@@ -42,7 +43,9 @@ export class GeneratorPage {
     suggestionCount: this.fb.nonNullable.control(this.suggestionCounts[0]),
   });
 
-  protected readonly isCustomCategory = computed(() => this.form.controls.category.value === 'custom');
+  protected readonly isCustomCategory = computed(
+    () => this.form.controls.category.value === 'custom',
+  );
 
   protected readonly selectedBudgetLabel = computed(() => {
     const index = this.form.controls.budgetIndex.value;
@@ -67,8 +70,15 @@ export class GeneratorPage {
       return;
     }
 
-    const { keywords, category, customCategory, style, domainExtensions, budgetIndex, suggestionCount } =
-      this.form.getRawValue();
+    const {
+      keywords,
+      category,
+      customCategory,
+      style,
+      domainExtensions,
+      budgetIndex,
+      suggestionCount,
+    } = this.form.getRawValue();
 
     const request: GenerationRequest = {
       keywords,

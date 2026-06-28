@@ -7,6 +7,15 @@
           {{ suggestions().length }} of {{ generationStore.suggestions().length }} suggestions for
           "{{ lastRequest()!.keywords.join(', ') }}"
         </p>
+        @if (!loading() && generationStore.suggestions().length > 0) {
+          <p class="mt-1 text-xs font-medium text-indigo-600 dark:text-indigo-400">
+            @if (usedAi()) {
+              Generated with AI
+            } @else {
+              Generated with the rule-based engine
+            }
+          </p>
+        }
       }
     </div>
 

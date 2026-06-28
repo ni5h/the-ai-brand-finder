@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ExportService } from '../../domain/export/export.service';
 import type { BrandSuggestion } from '../../domain/models';
+import { CompositeNameGenerator } from '../../domain/name-generation/engines/composite-name-generator';
 import { ScoreBadge } from '../../shared/ui/score-badge/score-badge';
 import { GenerationStore } from '../../state/generation.store';
 
@@ -16,6 +17,7 @@ type SortKey = 'score' | 'name' | 'length';
 export class ResultsPage {
   protected readonly generationStore = inject(GenerationStore);
   protected readonly exportService = inject(ExportService);
+  protected readonly usedAi = inject(CompositeNameGenerator).usedAiLastRun;
 
   protected readonly loading = this.generationStore.loading;
   protected readonly error = this.generationStore.error;

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { forkJoin, map, of } from 'rxjs';
+import { forkJoin, map, of, switchMap } from 'rxjs';
 import { DomainAvailabilityService } from './domain-availability/domain-availability.service';
 import type { BrandSuggestion, DomainResult, GenerationRequest } from './models';
 import { NAME_GENERATOR } from './name-generation/name-generation.tokens';
@@ -16,17 +16,19 @@ export class BrandGenerationService {
   private readonly domainAvailability = inject(DomainAvailabilityService);
 
   generate(request: GenerationRequest): Observable<BrandSuggestion[]> {
-    const candidateNames = this.nameGenerator.generate(request, request.suggestionCount * OVERSAMPLE_FACTOR);
-    if (candidateNames.length === 0) {
-      return of([]);
-    }
-
-    return forkJoin(candidateNames.map((name) => this.buildSuggestion(name, request))).pipe(
-      map((suggestions) =>
-        suggestions
-          .sort((a, b) => b.score.overall - a.score.overall)
-          .slice(0, request.suggestionCount),
-      ),
+    return this.nameGenerator.generate(request, request.suggestionCount * OVERSAMPLE_FACTOR).pipe(
+      switchMap((candidateNames) => {
+        if (candidateNames.length === 0) {
+          return of([]);
+        }
+        return forkJoin(candidateNames.map((name) => this.buildSuggestion(name, request))).pipe(
+          map((suggestions) =>
+            suggestions
+              .sort((a, b) => b.score.overall - a.score.overall)
+              .slice(0, request.suggestionCount),
+          ),
+        );
+      }),
     );
   }
 
@@ -47,11 +49,16 @@ export class BrandGenerationService {
     );
   }
 
-  private applyBudgetFilter(domains: DomainResult[], maxAnnualBudget: GenerationRequest['maxAnnualBudget']): DomainResult[] {
+  private applyBudgetFilter(
+    domains: DomainResult[],
+    maxAnnualBudget: GenerationRequest['maxAnnualBudget'],
+  ): DomainResult[] {
     if (maxAnnualBudget === null) {
       return domains;
     }
-    return domains.filter((domain) => domain.status !== 'available' || (domain.price ?? Infinity) <= maxAnnualBudget);
+    return domains.filter(
+      (domain) => domain.status !== 'available' || (domain.price ?? Infinity) <= maxAnnualBudget,
+    );
   }
 
   private makeId(): string {

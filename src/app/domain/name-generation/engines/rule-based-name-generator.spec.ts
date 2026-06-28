@@ -1,0 +1,51 @@
+import type { GenerationRequest } from '../../models';
+import { RuleBasedNameGenerator } from './rule-based-name-generator';
+
+function makeRequest(overrides: Partial<GenerationRequest> = {}): GenerationRequest {
+  return {
+    keywords: ['thinking', 'growth'],
+    category: 'startup',
+    style: 'modern',
+    domainExtensions: ['.com'],
+    maxAnnualBudget: null,
+    suggestionCount: 20,
+    ...overrides,
+  };
+}
+
+describe('RuleBasedNameGenerator', () => {
+  const generator = new RuleBasedNameGenerator();
+
+  it('returns no candidates when there are no keywords', () => {
+    expect(generator.generate(makeRequest({ keywords: [] }), 10)).toEqual([]);
+  });
+
+  it('generates unique, capitalized names within the requested count', () => {
+    const names = generator.generate(makeRequest(), 15);
+    expect(names.length).toBeGreaterThan(0);
+    expect(names.length).toBeLessThanOrEqual(15);
+    expect(new Set(names).size).toBe(names.length);
+    for (const name of names) {
+      expect(name[0]).toBe(name[0].toUpperCase());
+    }
+  });
+
+  it('rejects names that are too long, too short, or have excessive repeated letters', () => {
+    const names = generator.generate(makeRequest(), 200);
+    for (const name of names) {
+      expect(name.length).toBeGreaterThanOrEqual(3);
+      expect(name.length).toBeLessThanOrEqual(16);
+      expect(/(.)\1\1/.test(name.toLowerCase())).toBe(false);
+    }
+  });
+
+  it('builds acronyms when style is "acronym"', () => {
+    const names = generator.generate(makeRequest({ style: 'acronym', keywords: ['up', 'run', 'any'] }), 10);
+    expect(names.some((name) => name.toLowerCase().startsWith('ura'))).toBe(true);
+  });
+
+  it('builds two-word brand names when style is "two-word"', () => {
+    const names = generator.generate(makeRequest({ style: 'two-word', keywords: ['go', 'time'] }), 10);
+    expect(names).toContain('GoTime');
+  });
+});

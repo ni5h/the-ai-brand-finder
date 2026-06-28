@@ -1,0 +1,54 @@
+<div class="flex min-h-screen flex-col">
+  <header class="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+      <a routerLink="/" class="flex items-center gap-2 text-lg font-semibold tracking-tight">
+        <span class="rounded-lg bg-indigo-600 px-2 py-1 text-sm text-white">AI</span>
+        Brand Finder
+      </a>
+
+      <nav class="flex items-center gap-1 text-sm font-medium">
+        <a
+          routerLink="/generate"
+          routerLinkActive="bg-slate-100 dark:bg-slate-800"
+          class="rounded-md px-3 py-2 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+        >
+          Generate
+        </a>
+        <a
+          routerLink="/results"
+          routerLinkActive="bg-slate-100 dark:bg-slate-800"
+          class="rounded-md px-3 py-2 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+        >
+          Results
+        </a>
+        <a
+          routerLink="/history"
+          routerLinkActive="bg-slate-100 dark:bg-slate-800"
+          class="rounded-md px-3 py-2 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+        >
+          History
+        </a>
+        <button
+          type="button"
+          (click)="theme.toggle()"
+          class="ml-2 rounded-md p-2 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+          [attr.aria-label]="theme.dark() ? 'Switch to light mode' : 'Switch to dark mode'"
+        >
+          @if (theme.dark()) {
+            <span>☀️</span>
+          } @else {
+            <span>🌙</span>
+          }
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1">
+    <router-outlet />
+  </main>
+
+  <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+    Open-source brand name finder · No backend, no tracking · Built with Angular
+  </footer>
+</div>

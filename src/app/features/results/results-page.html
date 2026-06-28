@@ -1,0 +1,126 @@
+<section class="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Results</h1>
+      @if (lastRequest()) {
+        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          {{ suggestions().length }} of {{ generationStore.suggestions().length }} suggestions for
+          "{{ lastRequest()!.keywords.join(', ') }}"
+        </p>
+      }
+    </div>
+
+    @if (!loading() && generationStore.suggestions().length > 0) {
+      <div class="flex flex-wrap gap-2 print:hidden">
+        <button (click)="exportCsv()" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
+          Export CSV
+        </button>
+        <button (click)="exportJson()" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
+          Export JSON
+        </button>
+        <button (click)="copyToClipboard()" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
+          Copy
+        </button>
+        <button (click)="print()" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
+          Print
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="mt-16 flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
+      <div class="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-indigo-600"></div>
+      <p>Generating and checking domains — this can take a moment…</p>
+    </div>
+  } @else if (error()) {
+    <p class="mt-8 text-rose-600 dark:text-rose-400">{{ error() }}</p>
+  } @else if (generationStore.suggestions().length === 0) {
+    <div class="mt-16 text-center text-slate-500 dark:text-slate-400">
+      <p>No results yet.</p>
+      <a routerLink="/generate" class="mt-3 inline-block font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+        Generate some names
+      </a>
+    </div>
+  } @else {
+    <div class="mt-6 flex flex-wrap items-center gap-4 print:hidden">
+      <input
+        type="search"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+        placeholder="Search names…"
+        class="w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+      />
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" [ngModel]="favouritesOnly()" (ngModelChange)="favouritesOnly.set($event)" />
+        Favourites only
+      </label>
+    </div>
+
+    <div class="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+      <table class="w-full min-w-max text-left text-sm">
+        <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+          <tr>
+            <th class="cursor-pointer select-none px-4 py-3" (click)="setSort('name')">Brand Name</th>
+            <th class="cursor-pointer select-none px-4 py-3" (click)="setSort('score')">Score</th>
+            <th class="px-4 py-3">Available Domains</th>
+            <th class="px-4 py-3">Pronunciation</th>
+            <th class="px-4 py-3">Category</th>
+            <th class="cursor-pointer select-none px-4 py-3" (click)="setSort('length')">Length</th>
+            <th class="px-4 py-3 text-center">Favourite</th>
+            <th class="px-4 py-3 print:hidden">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @for (suggestion of suggestions(); track suggestion.id) {
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-900">
+              <td class="px-4 py-3 font-semibold">{{ suggestion.name }}</td>
+              <td class="px-4 py-3"><app-score-badge [score]="suggestion.score.overall" /></td>
+              <td class="px-4 py-3">
+                <div class="flex flex-wrap gap-1.5">
+                  @for (domain of suggestion.domains; track domain.domain) {
+                    <span
+                      class="rounded-full px-2 py-0.5 text-xs font-medium"
+                      [class]="
+                        domain.status === 'available'
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+                          : domain.status === 'taken'
+                            ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300'
+                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                      "
+                    >
+                      {{ domain.domain }}
+                      @if (domain.price) {
+                        · ₹{{ domain.price }}
+                      }
+                    </span>
+                  }
+                </div>
+              </td>
+              <td class="px-4 py-3 tabular-nums">{{ suggestion.score.pronunciation }}</td>
+              <td class="px-4 py-3 capitalize">{{ suggestion.category }}</td>
+              <td class="px-4 py-3 tabular-nums">{{ suggestion.length }}</td>
+              <td class="px-4 py-3 text-center">
+                <button
+                  (click)="toggleFavourite(suggestion)"
+                  [attr.aria-label]="suggestion.favourite ? 'Remove from favourites' : 'Add to favourites'"
+                  class="text-lg"
+                >
+                  {{ suggestion.favourite ? '❤️' : '🤍' }}
+                </button>
+              </td>
+              <td class="px-4 py-3 print:hidden">
+                <button
+                  (click)="exportService.copyNamesToClipboard([suggestion])"
+                  class="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                >
+                  Copy
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
